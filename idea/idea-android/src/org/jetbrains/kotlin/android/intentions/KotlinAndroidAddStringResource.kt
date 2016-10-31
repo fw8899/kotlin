@@ -126,6 +126,12 @@ class KotlinAndroidAddStringResource : SelfTargetingIntention<KtLiteralStringTem
             return null
         }
 
+        val resourceDirectory = dialog.resourceDirectory
+        if (resourceDirectory == null) {
+            AndroidUtils.reportError(module.project, AndroidBundle.message(RESOURCE_DIR_ERROR, module))
+            return null
+        }
+
         return CreateXmlResourceParameters(dialog.resourceName,
                                            dialog.value,
                                            dialog.fileName,
