@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.lang.UnsupportedOperationException
 import java.util.*
@@ -635,15 +636,18 @@ class DoubleColonExpressionResolver(
         }
     }
 
+    private class ResolutionResultsAndTraceCommitCallback(
+            val results: OverloadResolutionResults<CallableDescriptor>,
+            val commitTrace: () -> Unit
+    )
+
     private fun tryResolveRHSWithReceiver(
             traceTitle: String,
             receiver: Receiver?,
             reference: KtSimpleNameExpression,
             outerContext: ResolutionContext<*>,
             resolutionMode: ResolveArgumentsMode
-    ): OverloadResolutionResults<CallableDescriptor>? {
-        checkReservedYield(reference, outerContext.trace)
-
+    ): ResolutionResultsAndTraceCommitCallback? {
         // we should preserve information about `call` because callable references are analyzed two times,
         // otherwise there will be not completed calls in trace
         val call = outerContext.trace[BindingContext.CALL, reference] ?: CallMaker.makeCall(reference, receiver, null, reference, emptyList())
@@ -661,12 +665,16 @@ class DoubleColonExpressionResolver(
                 reference, BasicCallResolutionContext.create(newContext, call, CheckArgumentTypesMode.CHECK_CALLABLE_TYPE)
         )
 
-        val shouldCommitTrace =
-                if (resolutionMode == ResolveArgumentsMode.SHAPE_FUNCTION_ARGUMENTS) resolutionResults.isSingleResult
-                else !resolutionResults.isNothing
-        if (shouldCommitTrace) temporaryTrace.commit()
-
-        return if (resolutionResults.isNothing) null else resolutionResults
+        return when {
+            resolutionResults.isNothing -> null
+            else -> ResolutionResultsAndTraceCommitCallback(resolutionResults) {
+                checkReservedYield(reference, outerContext.trace)
+                val shouldCommitTrace =
+                        if (resolutionMode == ResolveArgumentsMode.SHAPE_FUNCTION_ARGUMENTS) resolutionResults.isSingleResult
+                        else !resolutionResults.isNothing
+                if (shouldCommitTrace) temporaryTrace.commit()
+            }
+        }
     }
 
     private fun resolveCallableReferenceRHS(
@@ -677,8 +685,12 @@ class DoubleColonExpressionResolver(
     ): OverloadResolutionResults<CallableDescriptor>? {
         val reference = expression.callableReference
 
-        val lhsType = lhs?.type ?:
-                      return tryResolveRHSWithReceiver("resolve callable reference with empty LHS", null, reference, c, mode)
+        val lhsType =
+                lhs?.type ?:
+                return tryResolveRHSWithReceiver("resolve callable reference with empty LHS", null, reference, c, mode)
+                       ?.apply { commitTrace() }?.results
+
+        val possibleResults = arrayListOf<ResolutionResultsAndTraceCommitCallback>()
 
         when (lhs) {
             is DoubleColonLHS.Type -> {
@@ -693,20 +705,20 @@ class DoubleColonExpressionResolver(
                     val possibleStatic = tryResolveRHSWithReceiver(
                             "resolve unbound callable reference in static scope", qualifier, reference, c, mode
                     )
-                    if (possibleStatic != null) return possibleStatic
+                    possibleResults.addIfNotNull(possibleStatic)
                 }
 
                 val possibleWithReceiver = tryResolveRHSWithReceiver(
                         "resolve unbound callable reference with receiver", TransientReceiver(lhsType), reference, c, mode
                 )
-                if (possibleWithReceiver != null) return possibleWithReceiver
+                possibleResults.addIfNotNull(possibleWithReceiver)
             }
             is DoubleColonLHS.Expression -> {
                 val expressionReceiver = ExpressionReceiver.create(expression.receiverExpression!!, lhsType, c.trace.bindingContext)
                 val result = tryResolveRHSWithReceiver(
                         "resolve bound callable reference", expressionReceiver, reference, c, mode
                 )
-                if (result != null) return result
+                possibleResults.addIfNotNull(result)
 
                 if (lhs.isObjectQualifier) {
                     val classifier = lhsType.constructor.declarationDescriptor
@@ -716,13 +728,16 @@ class DoubleColonExpressionResolver(
                         val possibleStatic = tryResolveRHSWithReceiver(
                                 "resolve object callable reference in static scope", qualifier, reference, c, mode
                         )
-                        if (possibleStatic != null) return possibleStatic
+                        possibleResults.addIfNotNull(possibleStatic)
                     }
                 }
             }
         }
 
-        return null
+        return (possibleResults.firstOrNull { it.results.isSuccess } ?: possibleResults.firstOrNull()) ?.let {
+            it.commitTrace()
+            it.results
+        }
     }
 
     companion object {
