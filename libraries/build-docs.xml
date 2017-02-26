@@ -22,7 +22,7 @@
     </target>
 
     <target name="document" depends="clean">
-        <dokka samples="stdlib/samples/src" outputDir="${output}/jre8" moduleName="kotlin-stdlib" skipDeprecated="true" outputFormat="kotlin-website" jdkversion="8" impliedplatforms="JVM,JS"
+        <dokka samples="stdlib/samples/test" outputDir="${output}/jre8" moduleName="kotlin-stdlib" skipDeprecated="true" outputFormat="kotlin-website" jdkversion="8" impliedplatforms="JVM,JS"
                include="stdlib/src/Module.md">
 
             <sourceRoot path="stdlib/src" platforms="JVM"/>
@@ -39,8 +39,12 @@
 
             <sourcelink path=".." url="http://github.com/JetBrains/kotlin/blob/${github.revision}" linesuffix="#L"/>
         </dokka>
-        <dokka src="kotlin.test/shared/src/main/kotlin:kotlin.test/shared/src/main/kotlin.jvm:kotlin.test/junit/src/main"
-               outputDir="${output}/jre8" moduleName="kotlin-test" skipDeprecated="true" outputFormat="kotlin-website" jdkversion="8">
+        <dokka outputDir="${output}/jre8" moduleName="kotlin-test" skipDeprecated="true" outputFormat="kotlin-website" jdkversion="8" impliedplatforms="JVM,JS">
+
+            <sourceRoot path="kotlin.test/common/src/main/kotlin" platforms="JVM,JS"/>
+            <sourceRoot path="kotlin.test/jvm/src/main/kotlin" platforms="JVM"/>
+            <sourceRoot path="kotlin.test/js/src/main/kotlin" platforms="JS"/>
+
             <sourcelink path=".." url="http://github.com/JetBrains/kotlin/blob/${github.revision}" linesuffix="#L"/>
         </dokka>
     </target>
