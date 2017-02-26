@@ -22,7 +22,7 @@
     </target>
 
     <target name="document" depends="clean">
-        <dokka samples="stdlib/samples/test" outputDir="${output}/jre8" moduleName="kotlin-stdlib" skipDeprecated="true" outputFormat="kotlin-website" jdkversion="8" impliedplatforms="JVM,JS"
+        <dokka samples="stdlib/samples/test" outputDir="${output}/jre8" moduleName="kotlin-stdlib" skipDeprecated="true" outputFormat="kotlin-website-samples" jdkversion="8" impliedplatforms="JVM,JS"
                include="stdlib/src/Module.md">
 
             <sourceRoot path="stdlib/src" platforms="JVM"/>
@@ -39,7 +39,7 @@
 
             <sourcelink path=".." url="http://github.com/JetBrains/kotlin/blob/${github.revision}" linesuffix="#L"/>
         </dokka>
-        <dokka outputDir="${output}/jre8" moduleName="kotlin-test" skipDeprecated="true" outputFormat="kotlin-website" jdkversion="8" impliedplatforms="JVM,JS">
+        <dokka outputDir="${output}/jre8" moduleName="kotlin-test" skipDeprecated="true" outputFormat="kotlin-website-samples" jdkversion="8" impliedplatforms="JVM,JS">
 
             <sourceRoot path="kotlin.test/common/src/main/kotlin" platforms="JVM,JS"/>
             <sourceRoot path="kotlin.test/jvm/src/main/kotlin" platforms="JVM"/>
@@ -51,5 +51,6 @@
 
     <target name="zip" depends="document">
         <zip destfile="target/stdlib-docs.zip" basedir="${output}/jre8/kotlin-stdlib"/>
+        <zip destfile="target/kotlin-test-docs.zip" basedir="${output}/jre8/kotlin-test"/>
     </target>
 </project>
