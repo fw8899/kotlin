@@ -55,7 +55,7 @@ public external interface RegExpMatch {
 }
 
 /**
- * Returns the entire text matched by [RegExp.exec] (if the [index] parameter is 0) or the text matched by the capturing parenthesis
+ * Returns the entire text matched by [RegExp.exec] if the [index] parameter is 0, or the text matched by the capturing parenthesis
  * at the given index.
  */
 public inline operator fun RegExpMatch.get(index: Int): String? = asDynamic()[index]
