@@ -21,7 +21,14 @@
         <mkdir dir="${output}"/>
     </target>
 
-    <target name="document" depends="clean">
+    <target name="build-js-stdlib-sources">
+        <ant antfile="build.xml" target="pack-js-stdlib-sources" dir=".."/>
+
+        <delete dir="${js.stdlib.src.path}"/>
+        <unzip src="../dist/kotlinc/lib/kotlin-stdlib-js-sources.jar" dest="${js.stdlib.src.path}"/>
+    </target>
+
+    <target name="document" depends="clean,build-js-stdlib-sources">
         <dokka samples="stdlib/samples/test" outputDir="${output}/jre8" moduleName="kotlin-stdlib" skipDeprecated="true" outputFormat="kotlin-website-samples" jdkversion="8" impliedplatforms="JVM,JS"
                include="stdlib/src/Module.md">
 
