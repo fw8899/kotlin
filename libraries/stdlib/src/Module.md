@@ -77,12 +77,12 @@ Runtime API for [Kotlin reflection](/docs/reference/reflection.html)
 
 # Package kotlin.reflect.full
 
-High-level API for [Kotlin reflection](/docs/reference/reflection.html)
+Extensions for [Kotlin reflection](/docs/reference/reflection.html) provided by `kotlin-reflect` library.
 
 # Package kotlin.reflect.jvm
 
 Runtime API for interoperability between [Kotlin reflection](/docs/reference/reflection.html) and
-Java reflection.
+Java reflection provided by `kotlin-reflect` library.
 
 # Package kotlin.sequences
 
